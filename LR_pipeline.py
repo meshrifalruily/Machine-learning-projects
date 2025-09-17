@@ -5,7 +5,9 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import SGDRegressor
-from sklearn.metrics import mean_squared_error  
+from sklearn.metrics import mean_squared_error 
+from sklearn.impute import SimpleImputer 
+from sklearn.model_selection import cross_val_score
 dataset = fetch_california_housing()
 print(dataset)
 
@@ -19,6 +21,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)    
 
 model = make_pipeline(
+    SimpleImputer(strategy='mean'),
     StandardScaler(),
     SGDRegressor(max_iter=10000, eta0=0.01)
 )       
@@ -27,4 +30,11 @@ model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 mse = mean_squared_error(y_test, y_pred)
 print(f'Root Mean Squared Error: {np.sqrt(mse)}')
+
+# Cross-validation
+for cv in [3, 5, 10]:
+    cv_scores = cross_val_score(model, X, y, cv=cv, scoring='neg_mean_squared_error')
+    cv_rmse_scores = np.sqrt(-cv_scores)
+    print(f'Cross-validated RMSE scores: {cv_rmse_scores}')
+    print(f'Average Cross-validated RMSE: {np.mean(cv_rmse_scores)}')
 
